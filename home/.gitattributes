@@ -1,0 +1,9 @@
+*.php		filter=rcs-keyword
+*.php4		filter=rcs-keyword
+*.php5		filter=rcs-keyword
+*.css		filter=rcs-keyword
+*.js		filter=rcs-keyword
+*.htm		filter=rcs-keyword
+*.html		filter=rcs-keyword
+*.pl		filter=rcs-keyword
+*.cgi		filter=rcs-keyword
