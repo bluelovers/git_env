@@ -1,0 +1,4 @@
+
+home/.ssh/id_rsa*
+*.ppk
+*.pub

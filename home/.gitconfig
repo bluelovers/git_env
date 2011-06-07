@@ -1,0 +1,80 @@
+[user]
+	name = bluelovers
+	email = codelovers@users.sourceforge.net
+[color]
+	log = auto
+	branch = auto
+	status = auto
+	diff = auto
+[core]
+	autocrlf = input
+	
+;	設置safecrlf = true，使得git拒絕提交包含混合換行符的文件
+	safecrlf = false
+;	safecrlf = true
+	
+;	excludesfile = c:/Documents and Settings/USER/.gitignore
+	excludesfile = ~/.gitignore
+	whitespace = trailing-space,space-before-tab,indent-with-non-tab
+	editor = notepad
+;	editor = D:\\Program Files (Portable)\\Notepad2\\Notepad2.exe
+	eol = lf
+[alias]
+	st = status
+	ci = commit
+	co = checkout
+	br = branch
+	
+	sst = submodule status
+	
+#git last
+#eba0f64370036ca57aa50b9938a3e70755f74aaa 我只是提交一下看看log..
+	last = log --pretty=oneline -1 HEAD
+	
+	df = difftool
+[filter "rcs-keyword"]
+;git config --global filter.rcs-keyword.clean 'perl -pe "s/\\\$Date[^\\\$]*\\\$/\\\$Date\\\$/"'
+;git config --global filter.rcs-keyword.smudge 'perl -pe "s/\\\$Date[^\\\$]*\\\$/\\\$Date: `date`\\\$/"'
+
+; 修正版
+;git config --global filter.rcs-keyword.clean 'perl -pe "s/\$Date[^\$]*\$/\$Date\$/"'
+;git config --global filter.rcs-keyword.smudge 'perl -pe "s/\$Date[^\$]*\$/\$Date: `date`\$/"'
+
+;	clean = perl -pe \"s/\\\\\\$Date[^\\\\\\$]*\\\\\\$/\\\\\\$Date\\\\\\$/\"
+;	smudge = perl -pe \"s/\\\\\\$Date[^\\\\\\$]*\\\\\\$/\\\\\\$Date: `date`\\\\\\$/\"
+[gui]
+	encoding = utf-8
+[i18n]
+	commitencoding = CP950
+;	commitencoding = utf-8
+;
+;	logoutputencoding = utf-8
+;	logoutputencoding = CP950
+;	logoutputencoding = unicode
+
+[diff]
+;把 diff.renames 改成 copy, 這樣除了偵測 rename 外，
+;也能偵測 copy. 例如把一個檔案 copy 到多處，
+;在 diff 下可以顯示 copy, 而不是給你一堆 ++++++
+	renames = true
+
+;	external = D:/msysgit/cmd/git-diff-wrapper.sh
+;	tool = tortoise
+
+[difftool]
+;	prompt = false
+
+[diff "tortoise"]
+	cmd = '"C:/Program Files/TortoiseGit/bin/TortoiseMerge.exe" -base:"$LOCAL" -theirs:"$REMOTE"'
+	prompt = false
+
+[merge]
+;merge.log 改成 true, 這樣 merge log 中，
+;就不會只顯示 merge, 還會把其他 commit log 彙整起來。
+;我覺得這很重要，因為一堆 merge commit 很難懂。
+;有 summary 就能比較明白看出 merge 之間的關係。
+	log = true
+
+[merge "tortoise"]
+	cmd = '"C:/Program Files/TortoiseGit/bin/TortoiseMerge.exe" -base:"$BASE" -theirs:"$REMOTE" -mine:"$LOCAL" -merged:"$MERGED"'
+	prompt = false
