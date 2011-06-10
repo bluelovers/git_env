@@ -32,8 +32,15 @@
 	last = log --pretty=oneline -1 HEAD
 	
 	df = difftool
+	mf = mergetool
 	
 	glog = log --graph --pretty=oneline --all
+	
+	ff = flow feature start
+	ff-end = flow feature finish
+	
+	fh = flow Hotfix start
+	fh-end = flow Hotfix finish
 	
 [filter "rcs-keyword"]
 ;git config --global filter.rcs-keyword.clean 'perl -pe "s/\\\$Date[^\\\$]*\\\$/\\\$Date\\\$/"'
@@ -51,7 +58,7 @@
 ;	commitencoding = CP950
 	commitencoding = utf-8
 ;
-;	logoutputencoding = utf-8
+	logoutputencoding = utf-8
 ;	logoutputencoding = CP950
 ;	logoutputencoding = unicode
 
@@ -59,10 +66,13 @@
 ;把 diff.renames 改成 copy, 這樣除了偵測 rename 外，
 ;也能偵測 copy. 例如把一個檔案 copy 到多處，
 ;在 diff 下可以顯示 copy, 而不是給你一堆 ++++++
-	renames = true
+;Tells git to detect renames. If set to any boolean value, it will enable basic rename detection. If set to "copies" or "copy", it will detect copies, as well. 
+;	renames = true
+	renames = copy
 
 ;	external = D:/msysgit/cmd/git-diff-wrapper.sh
 ;	tool = tortoise
+	tool = diffmerge
 
 [difftool]
 ;	prompt = false
@@ -70,6 +80,10 @@
 [diff "tortoise"]
 	cmd = '"C:/Program Files/TortoiseGit/bin/TortoiseMerge.exe" -base:"$LOCAL" -theirs:"$REMOTE"'
 	prompt = false
+
+[diff "diffmerge"]
+	cmd = "D:/Program Files (Portable)/DiffMerge/diffmerge" -result $LOCAL $REMOTE $LOCAL $LOCAL
+;	prompt = false
 
 [merge]
 ;merge.log 改成 true, 這樣 merge log 中，
