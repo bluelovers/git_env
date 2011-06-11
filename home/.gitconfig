@@ -42,6 +42,11 @@
 	fh = flow Hotfix start
 	fh-end = flow Hotfix finish
 	
+	cp = cherry-pick -n
+	cp-c = cherry-pick 
+	
+	ci-last = commit --amend
+	
 [filter "rcs-keyword"]
 ;git config --global filter.rcs-keyword.clean 'perl -pe "s/\\\$Date[^\\\$]*\\\$/\\\$Date\\\$/"'
 ;git config --global filter.rcs-keyword.smudge 'perl -pe "s/\\\$Date[^\\\$]*\\\$/\\\$Date: `date`\\\$/"'
