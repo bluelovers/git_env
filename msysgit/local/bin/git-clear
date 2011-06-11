@@ -1,0 +1,4 @@
+#!/bin/sh
+
+git reset --hard
+git clean -f -x -d
