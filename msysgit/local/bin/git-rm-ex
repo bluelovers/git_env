@@ -1,0 +1,7 @@
+#!/bin/sh
+
+# 不知道為什麼嘗試性的加上 echo 後就正常搭配 git filter-branch 而沒有因為錯誤中斷
+# $ git filter-branch --prune-empty -f --index-filter "git-rm-ex Valid.php"
+
+git ls-files --no-empty-directory -- | egrep --invert-match $1 | 
+xargs git rm --cached --ignore-unmatch -f -- | echo
