@@ -6,6 +6,8 @@
 	branch = auto
 	status = auto
 	diff = auto
+	
+	ui = auto
 [core]
 	autocrlf = input
 	
@@ -39,6 +41,12 @@
 	ff = flow feature start
 	ff-end = flow feature finish
 	
+	fr = flow release start
+	fr-end = flow release finish
+	
+	fs = flow support start
+	fs-end = flow support finish
+	
 	fh = flow Hotfix start
 	fh-end = flow Hotfix finish
 	
@@ -46,6 +54,9 @@
 	cp-c = cherry-pick 
 	
 	ci-last = commit --amend
+	
+	;https://code.google.com/p/tortoisegit/issues/detail?id=125
+	exportfiles = !sh -c 'git diff $0 --name-only | "while read files; do mkdir -p \"$1/$(dirname $files)\"; git show $(echo $0 | cut -d. -f1):$files>$1/$files; done"'
 	
 [filter "rcs-keyword"]
 ;git config --global filter.rcs-keyword.clean 'perl -pe "s/\\\$Date[^\\\$]*\\\$/\\\$Date\\\$/"'
@@ -59,6 +70,7 @@
 ;	smudge = perl -pe \"s/\\\\\\$Date[^\\\\\\$]*\\\\\\$/\\\\\\$Date: `date`\\\\\\$/\"
 [gui]
 	encoding = utf-8
+	fastcopyblame = true
 [i18n]
 ;	commitencoding = CP950
 	commitencoding = utf-8
@@ -72,8 +84,8 @@
 ;也能偵測 copy. 例如把一個檔案 copy 到多處，
 ;在 diff 下可以顯示 copy, 而不是給你一堆 ++++++
 ;Tells git to detect renames. If set to any boolean value, it will enable basic rename detection. If set to "copies" or "copy", it will detect copies, as well. 
-;	renames = true
-	renames = copy
+	renames = true
+;	renames = copy
 
 ;	external = D:/msysgit/cmd/git-diff-wrapper.sh
 ;	tool = tortoise
