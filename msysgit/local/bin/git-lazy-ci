@@ -1,0 +1,613 @@
+#!/bin/perl
+
+`clear`;
+
+print "git-Lazy Commit Each Change Script!!\n";
+
+my %map =
+(
+	'??' => 'Untracked files',
+
+	' M' => 'modified - Changes not staged for commit',
+	' R' => 'renamed - Changes not staged for commit',
+	' D' => 'deleted - Changes not staged for commit',
+	' A' => 'new file - Changes not staged for commit',
+
+	'M ' => 'modified',
+	'R ' => 'renamed',
+	'D ' => 'deleted',
+	'A ' => 'new file',
+
+);
+
+my @map_sort = ('R ', 'M ', 'A ', 'D ', ' R', ' M', ' A', ' D', '??');
+
+my @file;
+$file[0] = '~ci.list.txt';
+$file[1] = '~ci.log.txt';
+$file[2] = <~/COMMIT_EDITMSG>;
+
+my $commit_msg = trim(shift @ARGV);
+my $commit_mode = shift @ARGV;
+
+$commit_msg = trim_lf($commit_msg);
+
+#print $commit_msg;
+#exit;
+
+my %list_rename;
+my %list = git_status(0);
+
+open(FILE, "> $file[0]") || die("Cannot open file: $file[0]");
+
+$output = $output . log_r(%list_rename);
+$output = $output . "\n\n\n";
+$output = $output . log_r(%list);
+
+$output = trim_lf($output);
+
+print FILE $output;
+
+close(FILE);
+
+if (!$commit_msg || $commit_msg eq '')
+{
+	open(FILE2, "> $file[2]") || die("Cannot open file: $file[2]");
+
+		$output =~ s/\n/\n#/g;
+
+		if ($output ne '')
+		{
+			print FILE2 "\n#$output\n\n";
+		}
+
+	close(FILE2);
+
+	`notepad "$file[2]"`;
+
+	open (FILE2, $file[2]);
+	while (<FILE2>){
+		my $_c = substr $_, 0, 1;
+		next if ($_c eq '#');
+		$commit_msg = $commit_msg . rtrim($_) . "\n";
+	}
+	close(FILE2);
+
+	$commit_msg = trim_lf($commit_msg);
+}
+
+if (!$commit_msg || $commit_msg eq '')
+{
+	print "\nAborting commit due to empty commit message.\n";
+	exit;
+}
+
+#print "\n4.==============\n";
+#print log_r(%list);
+#
+#exit;
+
+print "\nStart...\n";
+
+git_loop();
+
+print "\n...End.";
+
+sub git_loop()
+{
+	my $i = 1;
+
+	foreach my $_m (@map_sort)
+	{
+		next if !($list_rename{$_m});
+
+		print "\n\[$_m\] $map{$_m}:\n\n";
+
+		foreach my $_v (@{$list_rename{$_m}})
+		{
+			print "[$i]\t$_v\n";
+
+			my ($_o, $_n) = split(' -> ', $_v);
+
+			my $_t;
+
+			$_t = `git rm --ignore-unmatch --cached $_o`;
+#			$_t = `git mv "$_o" "$_n"`;
+			$_t = `git add $_n`;
+		}
+
+			my %list_add;
+
+			if (1)
+			{
+				%list_add = git_status(2);
+			}
+			else
+			{
+				%list_add = git_status(1);
+			}
+
+			my $output_list = log_r(%list_add);
+
+			next if ($output_list eq '');
+
+			open(FILE2, "> $file[2]") || die("Cannot open file: $file[2]");
+
+			if ($commit_msg ne '')
+			{
+
+			}
+			else
+			{
+				$commit_msg = "Files Rename:";
+			}
+
+			print FILE2 $commit_msg;
+
+			if (!($commit_msg =~ m/\n/))
+			{
+				print FILE2 " (Step: $i)";
+			}
+
+			print FILE2 "\n\n";
+#			print FILE2 "git-Lazy Commit Each Change Script\n\nOutput:\n\n";
+			print FILE2 "Step: $i\n\n";
+
+
+			if ($output_list)
+			{
+#				print FILE2 $output_list;
+			}
+			else
+			{
+				next;
+			}
+
+			close(FILE2);
+
+			$cmd = "git commit -F $file[2]";
+#			$cmd = "git commit -o . -F \"$file[2]\" --dry-run";
+
+#			print "${cmd}\n";
+			my $log_ci = `$cmd`;
+
+			open(FILE1, "> $file[1]") || die("Cannot open file: $file[1]");
+			print FILE1 $log_ci;
+			close(FILE1);
+
+			$i++;
+	}
+
+	foreach my $_m (@map_sort)
+	{
+		next if !($list{$_m});
+
+		print "\n\[$_m\] $map{$_m}:\n\n";
+
+		foreach my $_v (@{$list{$_m}})
+		{
+			print "[$i]\t$_v\n";
+
+			if ($_m =~ m/D/)
+			{
+				$cmd = "git rm --ignore-unmatch --cached $_v";
+			}
+			else
+			{
+				$cmd = "git add --ignore-errors $_v";
+			}
+#			print "${cmd}\n";
+			my $log_ci = `$cmd`;
+			my %list_add;
+
+			if (1)
+			{
+				%list_add = git_status(2);
+			}
+			else
+			{
+				%list_add = git_status(1);
+			}
+
+			my $output_list = log_r(%list_add);
+
+			next if ($output_list eq '');
+
+			open(FILE2, "> $file[2]") || die("Cannot open file: $file[2]");
+
+			if ($commit_msg ne '')
+			{
+
+			}
+			else
+			{
+				$commit_msg = "File: $_v";
+			}
+
+			print FILE2 $commit_msg;
+
+			if (!($commit_msg =~ m/\n/))
+			{
+				print FILE2 " (Step: $i)";
+			}
+
+			print FILE2 "\n\n";
+#			print FILE2 "git-Lazy Commit Each Change Script\n\nOutput:\n\n";
+			print FILE2 "Step: $i\n\n";
+
+
+			if ($output_list)
+			{
+#				print FILE2 $output_list;
+			}
+			else
+			{
+				next;
+			}
+
+			close(FILE2);
+
+			$cmd = "git commit -F \"$file[2]\"";
+#			$cmd = "git commit -o . -F \"$file[2]\" --dry-run";
+
+#			print "${cmd}\n";
+			my $log_ci = `$cmd`;
+
+			open(FILE1, "> $file[1]") || die("Cannot open file: $file[1]");
+			print FILE1 $log_ci;
+			close(FILE1);
+
+			$i++;
+		}
+	}
+
+	if (0 || !$commit_mode)
+	{
+		unlink $file[0];
+		unlink $file[1];
+	}
+}
+
+sub git_renames(%)
+{
+	my %list = @_;
+	my @map_skip = ('D', 'A');
+	my %list_skip = (
+		' D' => (),
+		' A' => (),
+	);
+
+	my @map_rename;
+
+#	print "\n1.==============\n";
+#
+#	print log_r(%list);
+#
+#	print "\n0.==============\n";
+
+	my %list_all = git_status(-1);
+
+#	print log_r(%list_all);
+
+	foreach my $_m (keys %list_all)
+	{
+		if ($_m =~ m/R/)
+		{
+			foreach my $_v (@{$list_all{$_m}})
+			{
+				my @_s = split('->', $_v);
+
+				$_s[0] = trim($_s[0]);
+				$_s[1] = trim($_s[1]);
+
+				push @{$list_skip{' D'}}, $_s[0];
+				push @{$list_skip{' A'}}, $_s[1];
+
+				$map_rename{'D'}{$_s[0]} = $_s[1];
+				$map_rename{'A'}{$_s[1]} = $_s[0];
+
+				push @{$list_skip{$_m}}, $_v;
+			}
+		}
+	}
+
+#	print "\n9.==============\n";
+#
+#	foreach my $_m (keys %map_rename)
+#	{
+#		print "$_m:\n";
+#
+#		foreach my $_k (keys %{$map_rename{$_m}})
+#		{
+#			my $_v = $map_rename{$_m}{$_k};
+#			print "$_k => $_v\n";
+#		}
+#	}
+
+#	print "\n2.==============\n";
+#
+#	print log_r(%list_skip);
+
+	foreach my $_m (keys %list)
+	{
+#
+#		if ($_m =~ m/A/)
+#		{
+#			my ($union_ref, $isec_ref, $diff_ref, $aonly_ref, $bonly_ref) = ArrayFunctions(\@{$list{$_m}}, \@{$list_skip{' A'}});
+#
+#			@{$list{$_m}} = @bonly_ref;
+#
+#			print @union_ref;
+#		}
+#		elsif ($_m =~ m/D/)
+#		{
+#			my ($union_ref, $isec_ref, $diff_ref, $aonly_ref, $bonly_ref) = ArrayFunctions(\@{$list{$_m}}, \@{$list_skip{' D'}});
+#
+#			@{$list{$_m}} = @aonly_ref;
+#		}
+
+		if ($_m =~ m/A/)
+		{
+			my $_k = trim($_m);
+			my @temp;
+
+			foreach my $_v (@{$list{$_m}})
+			{
+				if (exists $map_rename{$_k}{$_v})
+				{
+					push @{$list_rename{' R'}}, $map_rename{$_k}{$_v} . ' -> ' . $_v;
+				}
+				else
+				{
+					push @temp, $_v;
+				}
+			}
+
+			if ($#temp >= 0)
+			{
+				@{$list{$_m}} = @temp;
+			}
+			else
+			{
+				delete $list{$_m};
+			}
+		}
+		elsif ($_m =~ m/D/)
+		{
+			my $_k = trim($_m);
+			my @temp = ();
+
+			foreach my $_v (@{$list{$_m}})
+			{
+				if (exists $map_rename{$_k}{$_v})
+				{
+					push @{$list_rename{' R'}}, $_v . ' -> ' . $map_rename{$_k}{$_v};
+				}
+				else
+				{
+					push @temp, $_v;
+				}
+			}
+
+			if ($#temp >= 0)
+			{
+				@{$list{$_m}} = @temp;
+			}
+			else
+			{
+				delete $list{$_m};
+			}
+		}
+		elsif ($_m =~ m/R/)
+		{
+			my $_k = trim($_m);
+			my @temp;
+
+			foreach my $_v (@{$list{$_m}})
+			{
+				push @{$list_rename{$_m}}, $_v;
+			}
+
+			if ($#temp > 0)
+			{
+				@{$list{$_m}} = @temp;
+			}
+			else
+			{
+				delete $list{$_m};
+			}
+		}
+
+	}
+
+#	print "3.==============\n";
+#
+#	print log_r(%list);
+
+	return %list;
+}
+
+sub array_remove ( \@& )
+{
+    my ( $arr_ref, $test_block ) = @_;
+    my $sp_start  = 0;
+    my $sp_len    = 0;
+    for ( my $inx = 0; $inx <= $#arr_ref; $inx++ )
+    {
+        local $_ = $arr_ref->[$inx];
+        next unless $test_block eq $_;
+        if ( $sp_len > 0 && $inx > $sp_start + $sp_len )
+        {
+            splice( @$arr_ref, $sp_start, $sp_len );
+            $inx    = $inx - $sp_len;
+            $sp_len = 0;
+        }
+        $sp_start = $inx if ++$sp_len == 1;
+    }
+    splice( @$arr_ref, $sp_start, $sp_len ) if $sp_len > 0;
+    return;
+}
+
+sub git_status()
+{
+	my $mode = shift @_;
+	my $text;
+
+#	print "\nmode: $mode\n";
+
+	if ($mode > 1)
+	{
+		$text = `git commit -m . --dry-run --short`;
+	}
+	elsif ($mode < 0)
+	{
+		`git add -A`;
+		$text = `git commit -m . --dry-run --short -o .`;
+		`git reset HEAD`;
+	}
+	else
+	{
+		$text = `git status -s .`;
+	}
+	my @text = split("\n", $text);
+
+	my %list;
+
+#	print $mode;
+
+	foreach (@text)
+	{
+		my $_k = substr $_, 0, 2;
+		my $_v = substr $_, 3;
+
+		my $_k0 = substr $_k, 0, 1;
+		my $_k1 = substr $_k, 1, 1;
+
+		if ($mode > 0)
+		{
+			$do_next = 1;
+
+			if ($_k1 eq ' ')
+			{
+				$do_next = 0;
+			}
+		}
+		elsif (!$commit_mode && $_k eq '??')
+		{
+			$do_next = 1;
+		}
+		else
+		{
+			$do_next = 0;
+		}
+
+#		print "$_k0 ${do_next} $_k1";
+#		print "\n";
+
+		next if $do_next;
+
+		push @{$list{$_k}}, $_v;
+	}
+
+	if ($mode == 0)
+	{
+		%list = git_renames(%list);
+	}
+
+	return %list;
+}
+
+sub log_r(%)
+{
+	my %list = @_;
+
+	my $text = '';
+
+	foreach my $_m (@map_sort)
+	{
+		next if !($list{$_m});
+
+		$text = $text . "\[$_m\] $map{$_m}:\n\n";
+
+		foreach my $_v (@{$list{$_m}})
+		{
+			$text = $text . "\t$_v\n";
+		}
+
+		$text = $text . "\n";
+
+	}
+
+	$text = trim_lf($text);
+
+	return $text;
+}
+
+# Perl trim function to remove whitespace from the start and end of the string
+sub trim($)
+{
+	my $string = shift;
+	$string =~ s/^\s+//;
+	$string =~ s/\s+$//;
+	return $string;
+}
+
+# Left trim function to remove leading whitespace
+sub ltrim($)
+{
+	my $string = shift;
+	$string =~ s/^\s+//;
+	return $string;
+}
+
+# Right trim function to remove trailing whitespace
+sub rtrim($)
+{
+	my $string = shift;
+	$string =~ s/\s+$//;
+	return $string;
+}
+
+sub trim_lf($)
+{
+	my $string = shift;
+	$string =~ s/^\n+//;
+	$string =~ s/\n+$//;
+	$string =~ s/[ \t\r]+\n/\n/g;
+	$string =~ s/\n\n\n+/\n\n/g;
+	return $string;
+}
+
+sub ArrayFunctions
+{
+	my $a_ref = shift; # reference to
+	my @a = @$a_ref; # input array
+
+	my $b_ref = shift; # reference to
+	my @b = @$b_ref; # input array
+
+	@Aseen{@a} = (); # lookup table
+	@Bseen{@b} = (); # lookup table
+
+	@isec = @diff = @union = @aonly = @bonly = (); # create null
+
+	foreach $e (@a, @b) { $count{$e}++ } # put all
+
+	foreach $e (keys %count) { # interate
+		push(@union, $e); # keys of hash
+
+		if ($count{$e} == 2) {
+			push @isec, $e; # seen more
+
+		} else {
+			push @diff, $e; # seen once =
+
+			push(@aonly, $e) unless exists $Bseen{$e}; # seen once +
+
+			push(@bonly, $e) unless exists $Aseen{$e}; # seen once +
+		}
+	}
+	return (@union, @isec, @diff, @aonly, @bonly); # return
+}
+
+exit;
