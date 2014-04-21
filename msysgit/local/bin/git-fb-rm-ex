@@ -1,0 +1,3 @@
+#!/bin/sh
+
+git filter-branch --prune-empty -f --index-filter "git-rm-ex $1"
