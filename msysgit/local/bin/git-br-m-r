@@ -1,0 +1,22 @@
+#!/bin/sh
+
+# 不知道為什麼嘗試性的加上 echo 後就正常搭配 git filter-branch 而沒有因為錯誤中斷
+# $ git br-m-r old-branch new-branch
+
+#echo -----------------------------------
+#echo [do] git branch -m $1 $2
+#echo -----------------------------------
+#git branch -m $1 $2
+#
+#echo -----------------------------------
+#echo [do] git push origin :$1 # delete $1
+#echo -----------------------------------
+#git push origin :$1 # delete $1
+#
+#echo -----------------------------------
+#echo [do] git push origin $2
+#echo -----------------------------------
+#git push origin $2
+
+git branch -m $1 $2
+git push origin :$1 && git push origin $2
