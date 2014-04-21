@@ -1,0 +1,6 @@
+#!/bin/sh
+
+echo u can use git notes-push or git-notes-push
+
+echo push notes now.......
+git push origin refs/notes/*
