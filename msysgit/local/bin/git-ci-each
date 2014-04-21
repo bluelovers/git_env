@@ -1,0 +1,88 @@
+#!/bin/bash
+
+clear
+
+echo "git-ci-each $1 $2"
+echo -e "git-Lazy Commit each changed file"
+
+file="~ci.list.txt"
+fc=~/COMMIT_EDITMSG
+fc2=~/COMMIT_EDITMSG.txt
+
+if [ $1 ]; then
+
+	msg=$1
+
+else
+
+	echo $1 > $fc2
+	notepad $fc2
+
+	msg=`cat $fc2`
+
+	#echo $msg
+
+fi
+
+exit
+
+echo -e "\tsave file list to $file"
+
+if [ $2 ]; then
+	git status -s > $file
+else
+	git diff --summary --name-status -M -C --no-prefix -b  --ignore-submodules --relative . > $file
+fi
+
+#exit
+
+seq=1
+while read line
+do
+	#lines[$seq]=$line
+	
+#		for ((i=1;i<=${#line[@]};i++))
+#		do
+#			lines[$seq]=${line[$i]}
+#		done
+		
+	for k in $line
+	do
+		lines[$seq]=$k
+	done
+	
+	((seq++))
+done < $file
+
+echo "" > "~ci.log.txt"
+
+echo "start..."
+
+for ((i=1;i<=${#lines[@]};i++))
+do
+	#echo ${lines[$i]}
+	
+	echo -e "\tgit add \"${lines[$i]}\""
+	git add "${lines[$i]}"
+	
+	if [ $msg ]; then
+		echo $msg > $fc
+		echo "" >> $fc
+		echo -e "\tpath: ${lines[$i]}" >> $fc
+		
+	else
+		echo "path: ${lines[$i]}" > $fc
+	fi
+	
+	#git commit -m "$1 ${lines[$i]}" > $fg
+	echo -e "\tgit commit -F \"$fc\"" > "~ci.log.txt"
+	git commit -F "$fc" > "~ci.log.txt"
+	
+done
+
+clear
+
+rm $file
+rm $file2
+
+echo "..end."
