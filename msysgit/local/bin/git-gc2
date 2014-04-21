@@ -1,0 +1,9 @@
+#!/bin/sh
+
+git count-objects
+echo -----------------------
+git gc
+echo -----------------------
+git fsck --full
+echo -----------------------
+git count-objects
