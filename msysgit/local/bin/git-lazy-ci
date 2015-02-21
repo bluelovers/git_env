@@ -29,8 +29,14 @@ $file[2] = <~/COMMIT_EDITMSG>;
 
 my $commit_msg = trim(shift @ARGV);
 my $commit_mode = shift @ARGV;
+my $output_list_mode = shift @ARGV;
 
 $commit_msg = trim_lf($commit_msg);
+
+if ($output_list_mode eq '')
+{
+	$output_list_mode = 1;
+}
 
 #print $commit_msg;
 #exit;
@@ -154,9 +160,9 @@ sub git_loop()
 			print FILE2 "Step: $i\n\n";
 
 
-			if ($output_list)
+			if ($output_list && $output_list_mode)
 			{
-#				print FILE2 $output_list;
+				print FILE2 $output_list;
 			}
 			else
 			{
@@ -236,9 +242,9 @@ sub git_loop()
 			print FILE2 "Step: $i\n\n";
 
 
-			if ($output_list)
+			if ($output_list && $output_list_mode)
 			{
-#				print FILE2 $output_list;
+				print FILE2 $output_list;
 			}
 			else
 			{
