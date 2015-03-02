@@ -145,7 +145,7 @@ do_log("=============================", 0);
 
 do_cmd("git checkout \"${br_now}\"", 0);
 
-if ($commit_count > 1)
+if ($commit_count > 1 && $commit_count > $output_list_mode)
 {
 	do_cmd("git merge --no-ff \"${br_name}\"", 0);
 }
