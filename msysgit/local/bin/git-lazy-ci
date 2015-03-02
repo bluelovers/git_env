@@ -1,8 +1,29 @@
 #!/bin/perl
 
-`clear`;
+BEGIN
+{
+#	open "STDERR", "> ~ci.errors.txt" or die "Could not write to ~ci.errors.txt: $!\n";
+}
 
-print "git-Lazy Commit Each Change Script!!\n";
+END
+{
+	do_end();
+
+	exit;
+}
+
+use Time::HiRes qw(time usleep gettimeofday);
+use POSIX qw(mktime ctime);
+
+my @file;
+$file[0] = '~ci.list.txt';
+$file[1] = '~ci.log.txt';
+$file[2] = <~/COMMIT_EDITMSG>;
+
+#`clear`;
+
+#print "git-Lazy Commit Each Change Script!!\n";
+do_log("git-Lazy Commit Each Change Script!!\n");
 
 my %map =
 (
@@ -22,10 +43,14 @@ my %map =
 
 my @map_sort = ('R ', 'M ', 'A ', 'D ', ' R', ' M', ' A', ' D', '??');
 
-my @file;
-$file[0] = '~ci.list.txt';
-$file[1] = '~ci.log.txt';
-$file[2] = <~/COMMIT_EDITMSG>;
+#my @file;
+#$file[0] = '~ci.list.txt';
+#$file[1] = '~ci.log.txt';
+#$file[2] = <~/COMMIT_EDITMSG>;
+
+do_start();
+
+my $commit_count = 0;
 
 my $commit_msg = trim(shift @ARGV);
 my $commit_mode = shift @ARGV;
@@ -37,6 +62,9 @@ if ($output_list_mode eq '')
 {
 	$output_list_mode = 1;
 }
+
+my $br_now = git_current_br();
+my $br_name = 'git-lazy-ci/' . getupdateDay();
 
 #print $commit_msg;
 #exit;
@@ -88,7 +116,8 @@ if (!$commit_msg || $commit_msg eq '')
 
 if (!$commit_msg || $commit_msg eq '')
 {
-	print "\nAborting commit due to empty commit message.\n";
+#	print "\nAborting commit due to empty commit message.\n";
+	do_log("\nAborting commit due to empty commit message.");
 	exit;
 }
 
@@ -97,11 +126,45 @@ if (!$commit_msg || $commit_msg eq '')
 #
 #exit;
 
-print "\nStart...\n";
+#print "\nStart...\n";
 
+do_log("-----------------------------", 0);
+do_log("\nStart...\n");
+
+do_cmd("git checkout -b \"${br_name}\"", 0);
+
+do_log("=============================", 0);
 git_loop();
 
-print "\n...End.";
+if (!$commit_count)
+{
+	do_log("\nFailed: nothing commit.\n");
+}
+
+do_log("=============================", 0);
+
+do_cmd("git checkout \"${br_now}\"", 0);
+
+if ($commit_count > 1)
+{
+	do_cmd("git merge --no-ff \"${br_name}\"", 0);
+}
+elsif ($commit_count > 0)
+{
+	do_cmd("git merge \"${br_name}\"", 0);
+}
+
+do_cmd("git branch -d \"${br_name}\"", 0);
+
+#print "\n...End.";
+do_log("-----------------------------", 0);
+do_log("\n...End. Total Step: ${commit_count}");
+
+DOCLOSE:
+
+do_end();
+
+exit;
 
 sub git_loop()
 {
@@ -121,9 +184,12 @@ sub git_loop()
 
 			my $_t;
 
-			$_t = `git rm --ignore-unmatch --cached $_o`;
-#			$_t = `git mv "$_o" "$_n"`;
-			$_t = `git add $_n`;
+#			$_t = `git rm --ignore-unmatch --cached $_o`;
+##			$_t = `git mv "$_o" "$_n"`;
+#			$_t = `git add $_n`;
+
+			$_t = do_cmd("git rm --ignore-unmatch --cached ${_o}", 0);
+			$_t = do_cmd("git add ${_n}", 0);
 		}
 
 			my %list_add;
@@ -180,14 +246,16 @@ sub git_loop()
 			close(FILE2);
 
 			$cmd = "git commit -F $file[2]";
-#			$cmd = "git commit -o . -F \"$file[2]\" --dry-run";
+##			$cmd = "git commit -o . -F \"$file[2]\" --dry-run";
+#
+##			print "${cmd}\n";
+#			my $log_ci = `$cmd`;
+#
+#			open(FILE1, "> $file[1]") || die("Cannot open file: $file[1]");
+#			print FILE1 $log_ci;
+#			close(FILE1);
 
-#			print "${cmd}\n";
-			my $log_ci = `$cmd`;
-
-			open(FILE1, "> $file[1]") || die("Cannot open file: $file[1]");
-			print FILE1 $log_ci;
-			close(FILE1);
+			my $log_ci = do_cmd($cmd, 0);
 
 			$i++;
 	}
@@ -204,19 +272,25 @@ sub git_loop()
 
 			$cmd = '';
 
+			my $_v2 = $_v;
+#			$_v2 =~ s/\\/\\\\/g;
+
 			if ($_m =~ m/D/)
 			{
-				$cmd = "git rm --ignore-unmatch --cached \"$_v\"";
+				$cmd = "git rm --ignore-unmatch --cached $_v2";
 			}
 			elsif ($_m ne '??')
 			{
-				$cmd = "git add --ignore-errors \"$_v\"";
+				$cmd = "git add --ignore-errors $_v2";
 			}
 
 			next if ($cmd eq '');
 
-#			print "${cmd}\n";
-			my $log_ci = `$cmd`;
+##			print "${cmd}\n";
+#			my $log_ci = `$cmd`;
+
+			my $log_ci = do_cmd($cmd, 0);
+
 			my %list_add;
 
 			if (1)
@@ -271,24 +345,31 @@ sub git_loop()
 			close(FILE2);
 
 			$cmd = "git commit -F \"$file[2]\"";
-#			$cmd = "git commit -o . -F \"$file[2]\" --dry-run";
+##			$cmd = "git commit -o . -F \"$file[2]\" --dry-run";
+#
+##			print "${cmd}\n";
+#			my $log_ci = `$cmd`;
+#
+#			open(FILE1, "> $file[1]") || die("Cannot open file: $file[1]");
+#			print FILE1 $log_ci;
+#			close(FILE1);
 
-#			print "${cmd}\n";
-			my $log_ci = `$cmd`;
-
-			open(FILE1, "> $file[1]") || die("Cannot open file: $file[1]");
-			print FILE1 $log_ci;
-			close(FILE1);
+			my $log_ci = do_cmd($cmd, 0);
 
 			$i++;
 		}
 	}
 
-	if (0 || !$commit_mode)
+	if ($i > 1)
 	{
-		unlink $file[0];
-		unlink $file[1];
+		$commit_count = $i - 1;
 	}
+
+#	if (0 || !$commit_mode)
+#	{
+#		unlink $file[0];
+#		unlink $file[1];
+#	}
 }
 
 sub git_output_all()
@@ -493,17 +574,24 @@ sub git_status()
 
 	if ($mode > 1)
 	{
-		$text = `git commit -m . --dry-run --short`;
+#		$text = `git commit -m . --dry-run --short`;
+
+		$text = do_cmd("git commit -m . --dry-run --short", 0);
 	}
 	elsif ($mode < 0)
 	{
-		`git add -A`;
-		$text = `git commit -m . --dry-run --short -o .`;
-		`git reset HEAD`;
+#		`git add -A`;
+#		$text = `git commit -m . --dry-run --short -o .`;
+#		`git reset HEAD`;
+
+		do_cmd("git add -A", 0);
+		$text = do_cmd("git commit -m . --dry-run --short -o .", 0);
+		do_cmd("git reset HEAD", 0);
 	}
 	else
 	{
-		$text = `git status -s .`;
+#		$text = `git status -s .`;
+		$text = do_cmd("git status -s .", 0);
 	}
 	my @text = split("\n", $text);
 
@@ -651,6 +739,125 @@ sub ArrayFunctions
 		}
 	}
 	return (@union, @isec, @diff, @aonly, @bonly); # return
+}
+
+sub getupdateDay{
+	my $sp = shift || "/";
+	my $cp = shift || ":";
+	my $ap = " - ";
+
+	$cp = $sp = '';
+	$ap = '/';
+	my $yp = '/';
+
+	my ($seconds, $microseconds) = gettimeofday();
+
+	return $seconds . '.' . $microseconds;
+
+	my @gmtime = gmtime($seconds);
+
+	my @localtime = localtime($seconds);
+
+	my $offset = 0 - ((mktime(@gmtime) - $seconds) / 3600);
+
+	@localtime = @gmtime;
+
+	$localtime[4]++;
+	$localtime[5] += 1900;
+
+	for (my $i=0; $i<@localtime; $i++){
+		$localtime[$i] = "0".$localtime[$i] if ($localtime[$i] < 10);
+	}
+
+#	return "$localtime[3]".$sp."$localtime[4]".$sp."$localtime[5]";
+	return $localtime[5].$yp.$localtime[4].$sp.$localtime[3].$ap.$localtime[2].$cp.$localtime[1].$cp.$localtime[0].'.'.$microseconds.'-GMT';
+}
+
+sub git_current_br
+{
+	return trim_lf(`git rev-parse --abbrev-ref HEAD`);
+}
+
+sub git_current_commit_if
+{
+	return trim_lf(`git rev-parse HEAD`);
+}
+
+sub do_log
+{
+	my $log_ci = shift;
+	my $show = shift;
+
+	if ($log_ci)
+	{
+		$log_ci = $log_ci."\n";
+
+		if ($show eq '' || $show)
+		{
+			print $log_ci;
+		}
+		print FILE1 $log_ci;
+	}
+}
+
+sub do_cmd()
+{
+	my $cmd = shift;
+	my $show = shift;
+	my $log_ci = '';
+
+	if ($cmd)
+	{
+#		open(FILE1, "> $file[1]") || die("Cannot open file: $file[1]");
+
+#		print FILE1 "-----------------------------\n";
+
+		do_log('-----------------------------', 0);
+
+		if ($show eq '' || $show)
+		{
+			print "\n${cmd}\n";
+		}
+
+#		print FILE1 "\$\t${cmd}\n";
+		do_log("\$\t${cmd}", 0);
+
+		$log_ci = `$cmd`;
+
+		$log_ci =~ s/^\n+//;
+		$log_ci =~ s/\n+$//;
+
+		if ($log_ci ne '')
+		{
+#			print FILE1 "\n${log_ci}\n\n";
+			do_log("\n${log_ci}\n", 0);
+		}
+
+#		close(FILE1);
+	}
+
+	return $log_ci;
+}
+
+sub do_start
+{
+	open(FILE1, "> $file[1]") || die("Cannot open file: $file[1]");
+}
+
+sub do_end
+{
+	print "\n";
+
+	close(FILE);
+	close(FILE1);
+	close(FILE2);
+
+	if (0 || !$commit_mode)
+	{
+		unlink $file[0];
+		unlink $file[1];
+		unlink '~ci.errors.txt';
+	}
 }
 
 exit;
