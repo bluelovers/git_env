@@ -21,6 +21,8 @@
 	editor = notepad
 ;	editor = D:\\Program Files (Portable)\\Notepad2\\Notepad2.exe
 	eol = lf
+	
+	quotepath = false
 [alias]
 	st = status
 	ci = commit
