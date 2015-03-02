@@ -1,5 +1,14 @@
-#!/bin/sh
+#!/bin/perl
 
-git checkout --orphan $1
+my $br_name = shift @ARGV;
 
-git rm -r --cached .
+if ($br_name)
+{
+	`git checkout --orphan "${br_name}"`;
+
+	`git rm -r --cached .`;
+}
+else
+{
+	print "git-br-empty <branch_name>\n";
+}
