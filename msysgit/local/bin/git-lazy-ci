@@ -208,14 +208,13 @@ sub git_loop()
 			{
 				$cmd = "git rm --ignore-unmatch --cached \"$_v\"";
 			}
-			else if ($_m eq '??')
-			{
-				$cmd = '';
-			}
-			else
+			elsif ($_m ne '??')
 			{
 				$cmd = "git add --ignore-errors \"$_v\"";
 			}
+
+			next if ($cmd eq '');
+
 #			print "${cmd}\n";
 			my $log_ci = `$cmd`;
 			my %list_add;
