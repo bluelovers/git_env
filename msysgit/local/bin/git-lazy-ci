@@ -42,15 +42,19 @@ if ($output_list_mode eq '')
 #exit;
 
 my %list_rename;
+my $output = '';
+my $output_all = '';
 my %list = git_status(0);
 
 open(FILE, "> $file[0]") || die("Cannot open file: $file[0]");
 
-$output = $output . log_r(%list_rename);
-$output = $output . "\n\n\n";
-$output = $output . log_r(%list);
+#$output = $output . log_r(%list_rename);
+#$output = $output . "\n\n\n";
+#$output = $output . log_r(%list);
+#
+#$output = trim_lf($output);
 
-$output = trim_lf($output);
+$output_all = $output = git_output_all();
 
 print FILE $output;
 
@@ -160,9 +164,13 @@ sub git_loop()
 			print FILE2 "Step: $i\n\n";
 
 
-			if ($output_list && $output_list_mode)
+			if ($output_list)
 			{
-				print FILE2 $output_list;
+				if ($output_list_mode)
+				{
+#					print FILE2 $output_list;
+					print FILE2 $output_all;
+				}
 			}
 			else
 			{
@@ -194,13 +202,19 @@ sub git_loop()
 		{
 			print "[$i]\t$_v\n";
 
+			$cmd = '';
+
 			if ($_m =~ m/D/)
 			{
-				$cmd = "git rm --ignore-unmatch --cached $_v";
+				$cmd = "git rm --ignore-unmatch --cached \"$_v\"";
+			}
+			else if ($_m eq '??')
+			{
+				$cmd = '';
 			}
 			else
 			{
-				$cmd = "git add --ignore-errors $_v";
+				$cmd = "git add --ignore-errors \"$_v\"";
 			}
 #			print "${cmd}\n";
 			my $log_ci = `$cmd`;
@@ -242,9 +256,13 @@ sub git_loop()
 			print FILE2 "Step: $i\n\n";
 
 
-			if ($output_list && $output_list_mode)
+			if ($output_list)
 			{
-				print FILE2 $output_list;
+				if ($output_list_mode)
+				{
+#					print FILE2 $output_list;
+					print FILE2 $output_all;
+				}
 			}
 			else
 			{
@@ -272,6 +290,19 @@ sub git_loop()
 		unlink $file[0];
 		unlink $file[1];
 	}
+}
+
+sub git_output_all()
+{
+	my $output;
+
+	$output = $output . log_r(%list_rename);
+	$output = $output . "\n\n\n";
+	$output = $output . log_r(%list);
+
+	$output = trim_lf($output);
+
+	return $output;
 }
 
 sub git_renames(%)
@@ -532,6 +563,13 @@ sub log_r(%)
 	foreach my $_m (@map_sort)
 	{
 		next if !($list{$_m});
+
+		if ($_m eq '??')
+		{
+#			print "\nskip $mode1 , $_m\n";
+
+			next;
+		}
 
 		$text = $text . "\[$_m\] $map{$_m}:\n\n";
 
