@@ -60,7 +60,7 @@ $commit_msg = trim_lf($commit_msg);
 
 if ($output_list_mode eq '')
 {
-	$output_list_mode = 1;
+	$output_list_mode = 2;
 }
 
 my $br_now = git_current_br();
