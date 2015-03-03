@@ -3,6 +3,8 @@
 BEGIN
 {
 #	open "STDERR", "> ~ci.errors.txt" or die "Could not write to ~ci.errors.txt: $!\n";
+
+	open MYSTDERR, "> ~ci.errors.txt" or die "Could not write to ~ci.errors.txt: $!\n";
 }
 
 END
@@ -47,6 +49,8 @@ my @map_sort = ('R ', 'M ', 'A ', 'D ', ' R', ' M', ' A', ' D', '??');
 #$file[0] = '~ci.list.txt';
 #$file[1] = '~ci.log.txt';
 #$file[2] = <~/COMMIT_EDITMSG>;
+
+my $chk_work = 0;
 
 do_start();
 
@@ -116,10 +120,14 @@ if (!$commit_msg || $commit_msg eq '')
 
 if (!$commit_msg || $commit_msg eq '')
 {
+	$chk_work = 1;
+
 #	print "\nAborting commit due to empty commit message.\n";
 	do_log("\nAborting commit due to empty commit message.");
 	exit;
 }
+
+$chk_work = 0;
 
 #print "\n4.==============\n";
 #print log_r(%list);
@@ -129,7 +137,7 @@ if (!$commit_msg || $commit_msg eq '')
 #print "\nStart...\n";
 
 do_log("-----------------------------", 0);
-do_log("\nStart...\n");
+do_log("Start...\n");
 
 do_cmd("git checkout -b \"${br_name}\"", 0);
 
@@ -154,11 +162,15 @@ elsif ($commit_count > 0)
 	do_cmd("git merge \"${br_name}\"", 0);
 }
 
+print "\n";
+
 do_cmd("git branch -d \"${br_name}\"", 0);
 
 #print "\n...End.";
 do_log("-----------------------------", 0);
 do_log("\n...End. Total Step: ${commit_count}");
+
+$chk_work = 1;
 
 DOCLOSE:
 
@@ -778,9 +790,17 @@ sub git_current_br
 	return trim_lf(`git rev-parse --abbrev-ref HEAD`);
 }
 
-sub git_current_commit_if
+sub git_current_commit_id
 {
 	return trim_lf(`git rev-parse HEAD`);
+}
+
+sub git_branch_is_empty
+{
+	# fatal: ambiguous argument 'HEAD': unknown revision or path not in the working tree.
+	my $log_ci = git_current_commit_id();
+
+	return ($log_ci =~ m/fatal/);
 }
 
 sub do_log
@@ -798,6 +818,8 @@ sub do_log
 		}
 		print FILE1 $log_ci;
 	}
+
+	return $log_ci;
 }
 
 sub do_cmd()
@@ -842,20 +864,58 @@ sub do_cmd()
 sub do_start
 {
 	open(FILE1, "> $file[1]") || die("Cannot open file: $file[1]");
+
+	if (git_branch_is_empty())
+	{
+		$chk_work = 1;
+
+		do_log("\nAborting current branch is empty.");
+		exit;
+	}
+}
+
+sub log_error
+{
+	my $log_ci = shift;
+	my $show = shift;
+
+	if ($log_ci)
+	{
+		$log_ci = $log_ci."\n";
+
+		if ($show eq '' || $show)
+		{
+			print $log_ci;
+		}
+		print MYSTDERR $log_ci;
+	}
+
+	return $log_ci;
 }
 
 sub do_end
 {
 	print "\n";
 
+	my $clear = 0 || !$commit_mode;
+
+	if ($chk_work !== 1)
+	{
+		log_error("\n...Error: something happend... (${chk_work})");
+
+		$clear = 0;
+	}
+
 	close(FILE);
 	close(FILE1);
 	close(FILE2);
+	close(MYSTDERR);
 
-	if (0 || !$commit_mode)
+	if ($clear)
 	{
 		unlink $file[0];
 		unlink $file[1];
+
 		unlink '~ci.errors.txt';
 	}
 }
