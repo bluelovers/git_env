@@ -13,3 +13,7 @@ _svn
 .picasa.ini
 
 *.bak
+
+~ci.list.txt
+~ci.log.txt
+~ci.errors.txt
