@@ -139,6 +139,8 @@ $chk_work = 0;
 do_log("-----------------------------", 0);
 do_log("Start...\n");
 
+do_cmd("You are now on branch '${br_now}'");
+
 do_cmd("git checkout -b \"${br_name}\"", 0);
 
 do_log("=============================", 0);
@@ -166,9 +168,15 @@ elsif ($commit_count > 0)
 
 do_cmd("git branch -d \"${br_name}\"", 0);
 
+do_log("\nSummary of actions:");
+do_log("- The lazy branch '${br_name}' was merged into '${br_now}'");
+do_log("- Lazy branch '${br_name}' is deleted");
+do_log("- You are now on branch '${br_now}'");
+do_log("- Total Step: ${commit_count}");
+
 #print "\n...End.";
 do_log("-----------------------------", 0);
-do_log("\n...End. Total Step: ${commit_count}");
+do_log("\n...End.");
 
 $chk_work = 1;
 
