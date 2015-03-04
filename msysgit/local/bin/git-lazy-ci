@@ -149,6 +149,8 @@ if (!$commit_count)
 	do_log("\nFailed: nothing commit.\n");
 }
 
+print "\n";
+
 do_log("=============================", 0);
 
 do_cmd("git checkout \"${br_now}\"", 0);
@@ -161,8 +163,6 @@ elsif ($commit_count > 0)
 {
 	do_cmd("git merge \"${br_name}\"", 0);
 }
-
-print "\n";
 
 do_cmd("git branch -d \"${br_name}\"", 0);
 
@@ -899,7 +899,7 @@ sub do_end
 
 	my $clear = 0 || !$commit_mode;
 
-	if ($chk_work !== 1)
+	if ($chk_work != 1)
 	{
 		log_error("\n...Error: something happend... (${chk_work})");
 
