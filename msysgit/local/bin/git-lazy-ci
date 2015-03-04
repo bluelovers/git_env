@@ -157,19 +157,23 @@ do_log("=============================", 0);
 
 do_cmd("git checkout \"${br_now}\"", 0);
 
+my $fastforward = '';
+
 if ($commit_count > 1 && $commit_count > $output_list_mode && $output_list_mode > 0)
 {
 	do_cmd("git merge --no-ff \"${br_name}\"", 0);
 }
 elsif ($commit_count > 0)
 {
+	$fastforward = 'fast-forward ';
+
 	do_cmd("git merge \"${br_name}\"", 0);
 }
 
 do_cmd("git branch -d \"${br_name}\"", 0);
 
 do_log("\nSummary of actions:");
-do_log("- The lazy branch '${br_name}' was merged into '${br_now}'");
+do_log("- The lazy branch '${br_name}' was ${fastforward}merged into '${br_now}'");
 do_log("- Lazy branch '${br_name}' is deleted");
 do_log("- You are now on branch '${br_now}'");
 do_log("- Total Step: ${commit_count}");
