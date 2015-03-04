@@ -137,9 +137,11 @@ $chk_work = 0;
 #print "\nStart...\n";
 
 do_log("-----------------------------", 0);
-do_log("Start...\n");
+do_log("Start...");
 
-do_cmd("You are now on branch '${br_now}'");
+print "\n";
+
+do_log("You are now on branch '${br_now}'");
 
 do_cmd("git checkout -b \"${br_name}\"", 0);
 
