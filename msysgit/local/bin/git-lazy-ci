@@ -633,7 +633,7 @@ sub git_status()
 #		$text = `git commit -m . --dry-run --short -o .`;
 #		`git reset HEAD`;
 
-		do_cmd("git add -A", 0);
+		do_cmd("git add -A .", 0);
 		$text = do_cmd("git commit -m . --dry-run --short -o .", 0);
 		do_cmd("git reset HEAD", 0);
 	}
