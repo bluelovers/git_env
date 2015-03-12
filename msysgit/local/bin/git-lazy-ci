@@ -16,6 +16,12 @@ END
 
 use Time::HiRes qw(time usleep gettimeofday);
 use POSIX qw(mktime ctime);
+use Data::Dumper;
+use Switch;
+#use Scalar::Util qw(looks_like_number);
+
+use constant false => 0;
+use constant true  => 1;
 
 my @file;
 $file[0] = '~ci.list.txt';
@@ -56,16 +62,22 @@ do_start();
 
 my $commit_count = 0;
 
-my $commit_msg = trim(shift @ARGV);
-my $commit_mode = shift @ARGV;
-my $output_list_mode = shift @ARGV;
+#my $commit_msg = trim(shift @ARGV);
+#my $commit_mode = shift @ARGV;
+#my $output_list_mode = shift @ARGV;
 
-$commit_msg = trim_lf($commit_msg);
+#$commit_msg = trim_lf($commit_msg);
+#
+#if ($output_list_mode eq '')
+#{
+#	$output_list_mode = 2;
+#}
 
-if ($output_list_mode eq '')
-{
-	$output_list_mode = 2;
-}
+my $commit_msg = getOption('--msg');
+my $commit_mode = getOption('--log');
+my $output_list_mode = getOption('--no-ff');
+
+#print_r(%params);
 
 my $br_now = git_current_br();
 my $br_name = 'git-lazy-ci/' . getupdateDay();
@@ -143,7 +155,7 @@ print "\n";
 
 do_log("You are now on branch '${br_now}'");
 
-do_cmd("git checkout -b \"${br_name}\"", 0);
+do_cmd("git checkout -b \"${br_name}\"", 0, true);
 
 do_log("=============================", 0);
 git_loop();
@@ -157,22 +169,22 @@ print "\n";
 
 do_log("=============================", 0);
 
-do_cmd("git checkout \"${br_now}\"", 0);
+do_cmd("git checkout \"${br_now}\"", 0, true);
 
 my $fastforward = '';
 
 if ($commit_count > 1 && $commit_count > $output_list_mode && $output_list_mode > 0)
 {
-	do_cmd("git merge --no-ff \"${br_name}\"", 0);
+	do_cmd("git merge --no-ff \"${br_name}\"", 0, true);
 }
 elsif ($commit_count > 0)
 {
 	$fastforward = 'fast-forward ';
 
-	do_cmd("git merge \"${br_name}\"", 0);
+	do_cmd("git merge \"${br_name}\"", 0, true);
 }
 
-do_cmd("git branch -d \"${br_name}\"", 0);
+do_cmd("git branch -d \"${br_name}\"", 0, true);
 
 do_log("\nSummary of actions:");
 do_log("- The lazy branch '${br_name}' was ${fastforward}merged into '${br_now}'");
@@ -200,11 +212,13 @@ sub git_loop()
 	{
 		next if !($list_rename{$_m});
 
-		print "\n\[$_m\] $map{$_m}:\n\n";
+#		print "\n\[$_m\] $map{$_m}:\n\n";
+		do_log("\n\[$_m\] $map{$_m}:\n");
 
 		foreach my $_v (@{$list_rename{$_m}})
 		{
-			print "[$i]\t$_v\n";
+#			print "[$i]\t$_v\n";
+			do_log("[$i]\t$_v");
 
 			my ($_o, $_n) = split(' -> ', $_v);
 
@@ -214,8 +228,8 @@ sub git_loop()
 ##			$_t = `git mv "$_o" "$_n"`;
 #			$_t = `git add $_n`;
 
-			$_t = do_cmd("git rm --ignore-unmatch --cached ${_o}", 0);
-			$_t = do_cmd("git add ${_n}", 0);
+			$_t = do_cmd("git rm --ignore-unmatch --cached ${_o}", 0, true);
+			$_t = do_cmd("git add ${_n}", 0, true);
 		}
 
 			my %list_add;
@@ -290,11 +304,20 @@ sub git_loop()
 	{
 		next if !($list{$_m});
 
-		print "\n\[$_m\] $map{$_m}:\n\n";
+#		print "\n\[$_m\] $map{$_m}:\n\n";
+		do_log("\n\[$_m\] $map{$_m}:\n");
+
+		if ($_m =~ m/D/ && getOption('--no-del'))
+		{
+			do_log("\t\"--no-del\" is set, skip all deleted.");
+
+			next;
+		}
 
 		foreach my $_v (@{$list{$_m}})
 		{
-			print "[$i]\t$_v\n";
+#			print "[$i]\t$_v\n";
+			do_log("[$i]\t$_v");
 
 			$cmd = '';
 
@@ -315,7 +338,7 @@ sub git_loop()
 ##			print "${cmd}\n";
 #			my $log_ci = `$cmd`;
 
-			my $log_ci = do_cmd($cmd, 0);
+			my $log_ci = do_cmd($cmd, 0, true);
 
 			my %list_add;
 
@@ -838,9 +861,13 @@ sub do_log
 
 sub do_cmd()
 {
+	our $test_mode;
+
 	my $cmd = shift;
 	my $show = shift;
 	my $log_ci = '';
+
+	my $test = shift && $test_mode;
 
 	if ($cmd)
 	{
@@ -850,15 +877,27 @@ sub do_cmd()
 
 		do_log('-----------------------------', 0);
 
+		if ($test)
+		{
+			$test = '[TEST MODE]\t';
+		}
+		else
+		{
+			$test = '';
+		}
+
 		if ($show eq '' || $show)
 		{
-			print "\n${cmd}\n";
+			print "\n${test}${cmd}\n";
 		}
 
 #		print FILE1 "\$\t${cmd}\n";
-		do_log("\$\t${cmd}", 0);
+		do_log("${test}\$\t${cmd}", 0);
 
-		$log_ci = `$cmd`;
+		if (!$test)
+		{
+			$log_ci = `$cmd`;
+		}
 
 		$log_ci =~ s/^\n+//;
 		$log_ci =~ s/\n+$//;
@@ -879,6 +918,19 @@ sub do_start
 {
 	open(FILE1, "> $file[1]") || die("Cannot open file: $file[1]");
 
+	our %params = parseCmdLine(@ARGV);
+
+	fixOptions();
+
+	if (getOption('--help'))
+	{
+		$chk_work = 1;
+
+		show_help();
+
+		exit;
+	}
+
 	if (git_branch_is_empty())
 	{
 		$chk_work = 1;
@@ -886,6 +938,36 @@ sub do_start
 		do_log("\nAborting current branch is empty.");
 		exit;
 	}
+
+#	print_r(@ARGV);
+
+	# not safe test
+	our $test_mode = getOption('--test');
+
+#	exit;
+}
+
+sub show_help
+{
+	local $\ = "\n";
+
+	my $show = "\t@<<<<<<<<<<<<<<<<<<<<<<<@";
+
+	print "Usage: git-lazy-ci <commit_msg> [options...]";
+	print "Usage: git-lazy-ci <commit_msg> [<number>, <number>]\n";
+	print swrite2($show, ['--msg <commit_msg>']) . "set commit msg";
+	print swrite2($show, ['--log']);
+	print swrite2($show, ['--no-ff [<number>]']);
+	print swrite2($show, ['--help']) . "show help";
+	print swrite2($show, ['--ff']);
+	print swrite2($show, ['--test']);
+	print swrite2($show, ['--no-del']);
+}
+
+sub println
+{
+	local $\ = "\n";
+	print @_;
 }
 
 sub log_error
@@ -932,6 +1014,210 @@ sub do_end
 
 		unlink '~ci.errors.txt';
 	}
+}
+
+sub parseCmdLine
+{
+	my @cmd_line = @_;
+	my $param;
+	my $param_last;
+	my $param_value;
+	my %params;
+	my $n = 0;
+
+	my $found_msg = 0;
+
+	$params{'params'} = {
+		'--ff' => false,
+		'--no-ff' => 2,
+	};
+
+	my $is_old = true;
+
+	my @help = qw(--h --help --?);
+
+	foreach my $param (@cmd_line)
+	{
+		$params{'argv'}[$n] = $param;
+
+		my $is_else = false;
+
+		if ($is_old && $found_msg && !is_number($param))
+		{
+			$is_old = false;
+		}
+
+		if ($param_value && $param =~ /^--\S+$/)
+		{
+			$param_value = false;
+		}
+
+		switch ($param)
+		{
+			case '--no-ff'
+			{
+				$params{'params'}{'--ff'} = false;
+			}
+			case '--ff'
+			{
+				$params{'params'}{$param} = true;
+			}
+			case '--msg'
+			{
+				$param_value = true;
+			}
+			case (@help)
+			{
+				$params{'params'}{'--help'} = true;
+			}
+			else
+			{
+				my $param_key = $param;
+
+				if ($param_value || (is_number($param) && $param_last =~ /^--\S+$/))
+				{
+					$param_key = $param_last;
+
+					if ($found_msg)
+					{
+
+					}
+
+					$params{'params'}{$param_key} = $param;
+				}
+				elsif ($found_msg)
+				{
+					if ($is_old)
+					{
+						switch ($n)
+						{
+							case 1
+							{
+								$param_key = '--log';
+							}
+							case 2
+							{
+								$param_key = '--no-ff';
+							}
+							else
+							{
+
+							}
+						};
+					}
+
+					$params{'params'}{$param_key} = $param;
+				}
+				else
+				{
+					$param_key = '--msg';
+
+					$params{'params'}{$param_key} = $param;
+					$found_msg = true;
+				}
+
+				if ($param_key eq '--msg')
+				{
+					$found_msg = true;
+				}
+
+				$param_value = false;
+			}
+		};
+
+		$param_last = $param;
+		$n++;
+	}
+
+#	print_r(%params);
+
+	return %params;
+}
+
+sub fixOptions
+{
+	our %params;
+
+	$params{'params'}{'--msg'} = trim_lf($params{'params'}{'--msg'});
+
+	if ($params{'params'}{'--ff'})
+	{
+		$params{'params'}{'--no-ff'} = -1;
+	}
+
+	if (!is_number($params{'params'}{'--no-ff'}))
+	{
+		$params{'params'}{'--no-ff'} = 2;
+	}
+}
+
+sub getOption
+{
+	my $param_key = $_[0];
+
+	return $params{'params'}{$param_key};
+}
+
+sub print_r
+{
+	return print Dumper(@_);
+}
+
+sub is_number
+{
+#	return looks_like_number(shift);
+
+	return defined $_[0] && $_[0] =~ /^[+-]?\d+$/;
+}
+
+sub in_array
+{
+     my ($arr, $search_for) = @_;
+     return grep {$search_for eq $_} @$arr;
+}
+
+sub swrite
+{
+	my $result = '';
+	for (my $i = 0; $i < @_; $i += 2)
+	{
+		my $format = $_[$i];
+		my @args = @{$_[$i+1]};
+		if ($format =~ /@[<|>]/)
+		{
+			$^A = '';
+			formline($format, @args);
+			$result .= "$^A\n";
+		}
+		else
+		{
+			$result .= "$format\n";
+		}
+	}
+	$^A = '';
+	return $result;
+}
+
+sub swrite2
+{
+	my $result = '';
+	for (my $i = 0; $i < @_; $i += 2)
+	{
+		my $format = $_[$i];
+		my @args = @{$_[$i+1]};
+		if ($format =~ /@[<|>]/)
+		{
+			$^A = '';
+			formline($format, @args);
+			$result .= "$^A";
+		}
+		else
+		{
+			$result .= "$format";
+		}
+	}
+	$^A = '';
+	return $result;
 }
 
 exit;
