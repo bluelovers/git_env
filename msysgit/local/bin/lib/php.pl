@@ -37,11 +37,4 @@ sub in_array
      return grep {$search_for eq $_} @$arr;
 }
 
-sub is_number
-{
-#	return looks_like_number(shift);
-
-	return defined $_[0] && $_[0] =~ /^[+-]?\d+$/;
-}
-
 1;
