@@ -8,6 +8,11 @@ sub trim_exec($)
 	return $string;
 }
 
+sub git_exec
+{
+	return trim_exec(`$_[0]`);
+}
+
 #http://stackoverflow.com/questions/12293944/how-to-find-the-path-of-the-local-git-repository-when-i-am-possibly-in-a-subdire
 sub git_root
 {
