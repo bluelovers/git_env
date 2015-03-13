@@ -1,4 +1,4 @@
-package Git::Tool;
+package GitTool;
 
 sub trim_exec($)
 {
