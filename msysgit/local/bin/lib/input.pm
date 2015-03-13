@@ -158,6 +158,11 @@ sub parseCmdLine
 			}
 		};
 
+		if ($self->is_key($param_key))
+		{
+			push (@{$params{'keys'}}, $param_key);
+		}
+
 		if ($param_key && !$params{'first'})
 		{
 			$params{'first'} = $param_key;
