@@ -12,8 +12,27 @@ require 'lib/git.pm';
 
 my $ignorefile = ".gitignore-oncommit";
 
-our %params = CmdLineTool::newInstance()->parseCmdLine(@ARGV);
+my $input = CmdLineTool::newInstance();
 
+my %params = $input->parseCmdLine(@ARGV);
 
+my $file = $input->getParam($params{first});
+
+if (!$file || $file eq '')
+{
+
+}
+
+switch ($params{first})
+{
+	case ('--add')
+	{
+		GitTool::git_exec('git update-index --assume-unchanged \"${file}\"');
+	}
+	case ('--rm')
+	{
+		GitTool::git_exec('git update-index --no-assume-unchanged \"${file}\"');
+	}
+}
 
 1;
