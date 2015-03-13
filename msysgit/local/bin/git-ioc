@@ -1,0 +1,19 @@
+#!/bin/perl
+
+use File::Basename qw(dirname);
+
+unshift @INC, dirname(__FILE__);
+
+use Switch;
+
+require 'lib/common.pl';
+require 'lib/input.pm';
+require 'lib/git.pm';
+
+my $ignorefile = ".gitignore-oncommit";
+
+our %params = CmdLineTool::newInstance()->parseCmdLine(@ARGV);
+
+
+
+1;
