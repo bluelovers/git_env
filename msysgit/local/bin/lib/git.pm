@@ -8,9 +8,30 @@ sub trim_exec($)
 	return $string;
 }
 
+#http://stackoverflow.com/questions/12293944/how-to-find-the-path-of-the-local-git-repository-when-i-am-possibly-in-a-subdire
 sub git_root
 {
 	return trim_exec(`git rev-parse --show-toplevel`);
+}
+
+sub git_root_git_dir
+{
+	return trim_exec(`git rev-parse --git-dir`);
+}
+
+sub git_current_path
+{
+	return trim_exec(`git rev-parse --show-prefix`);
+}
+
+sub git_is_inside_work_tree
+{
+	return trim_exec(`git rev-parse --is-inside-work-tree`);
+}
+
+sub git_is_inside_git_dir
+{
+	return trim_exec(`git rev-parse --is-inside-git-dir`);
 }
 
 sub git_branch_is_empty
