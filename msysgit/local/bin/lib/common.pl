@@ -10,5 +10,6 @@ unshift @INC, LAZYLIBPATH;
 
 require 'php.pl';
 require 'func.pl';
+require 'file.pl';
 
 1;
