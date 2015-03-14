@@ -1,6 +1,6 @@
 #!/bin/perl
 
-use File::Basename qw(dirname);
+use File::Basename qw(dirname basename);
 
 {
 	local $file = __FILE__;
@@ -14,29 +14,231 @@ require 'lib/common.pl';
 require 'lib/input.pm';
 require 'lib/git.pm';
 
+print "git-Lazy ignore-on-commit Script!!\n\n";
+
 my $ignorefile = ".gitignore-oncommit";
+my $configkey = "gitlazy.ignoreoncommit";
+
+my $ignorefile_full = GitTool::git_root() . '/' . $ignorefile;
+
+my @ignorefile_now;
+my @ignorefile_edit;
+
+my $path_full = GitTool::git_current_path_full();
 
 my $input = CmdLineTool::newInstance();
 
 my %params = $input->parseCmdLine(@ARGV);
 
-my $file = $input->getParam($params{first});
+my @filelist;
 
-if (!$file || $file eq '')
+if ($params{first} eq '--init')
 {
+	goto CHKSWITCH;
+}
+
+my $filename = $input->getParam($params{first});
+
+if ($filename =~ /\*/ || 1)
+{
+	@filelist = glob('"'.$path_full.$filename.'"');
+
+#	print_r(@filelist, $path_full.$filename);
+}
+elsif ($filename)
+{
+	push (@filelist, $filename);
+}
+
+CHKFILE:
+
+if ($#filelist < 0)
+{
+	print $#filelist, "\n";
+
+	print_r(@filelist);
+
 	exit;
 }
+
+CHKSWITCH:
+
+my $cmd = '';
+my $fn;
 
 switch ($params{first})
 {
 	case ('--add')
 	{
-		GitTool::git_exec('git update-index --assume-unchanged \"${file}\"');
+		$cmd = "git update-index --assume-unchanged \"%s\"";
+		$fn = 'ignorefile_add';
+
+		do_loop($params{first}, $cmd, \$fn);
 	}
 	case ('--rm')
 	{
-		GitTool::git_exec('git update-index --no-assume-unchanged \"${file}\"');
+		$cmd = "git update-index --no-assume-unchanged \"%s\"";
+		$fn = 'ignorefile_remove';
+
+		do_loop($params{first}, $cmd, \$fn);
 	}
+	case ('--init')
+	{
+		if (is_inited())
+		{
+			print "Already Inited\n";
+
+			exit;
+		}
+
+		open(FILE, ">".$ignorefile_full);
+		close(FILE);
+
+		$cmd = "git update-index --assume-unchanged \"%s\"";
+		$fn = 'ignorefile_add';
+
+		@filelist = ignorefile_st();
+
+		do_loop('--add', $cmd, \$fn);
+
+		GitTool::git_exec('git config --bool --add gitlazy.ignoreoncommit.init true');
+	}
+	case ('--st')
+	{
+		my @list = ignorefile_st();
+
+		foreach my $file (@list)
+		{
+			print $file, "\n";
+		}
+	}
+}
+
+sub do_loop
+{
+	my $key = shift;
+	my $cmd = shift;
+	my $fn = shift;
+
+	if ($cmd && $fn)
+	{
+		print $cmd, "\n\n";
+
+		my $root = GitTool::git_root() . '/';
+		my $path = GitTool::git_current_path();
+
+		my $i = 0;
+
+		foreach my $file (@filelist)
+		{
+			my $filename = basepath($file, $root);
+
+			printf "\t[%i] %s\n", $i, $filename;
+
+			${$fn}->($filename);
+
+			if ($path)
+			{
+				$filename = basepath($filename, $path);
+			}
+
+			GitTool::git_exec(sprintf($cmd, $filename));
+
+			$i++;
+		}
+
+		our @ignorefile_edit;
+		our @ignorefile_now;
+
+		print_r(777, @ignorefile_edit, @ignorefile_now);
+
+		if ($key eq '--add')
+		{
+			open(FILE, ">>".$ignorefile_full);
+
+			foreach my $file (@ignorefile_edit)
+			{
+				print FILE $file, "\n";
+			}
+
+			close(FILE);
+		}
+		elsif ($key eq '--rm')
+		{
+			open(FILE, ">".$ignorefile_full);
+
+			foreach my $file (@ignorefile_now)
+			{
+				if (!in_array(@ignorefile_edit, $file))
+				{
+					print FILE $file, "\n";
+				}
+			}
+
+			close(FILE);
+		}
+	}
+}
+
+sub is_inited
+{
+	my $init = GitTool::git_exec("git config --bool --get ${configkey}.init");
+
+	return ($init eq 'true') || 0;
+}
+
+sub ignorefile_st
+{
+	my $text = GitTool::git_exec("git ls-files -v | grep ^[^HSMRCK\?]");
+
+	my @text = split("\n", $text);
+	my @list;
+
+	foreach (@text)
+	{
+		push (@list, substr $_, 2);
+	}
+
+	return @list;
+}
+
+sub ignorefile_parse
+{
+	our @ignorefile_now = parseFile($ignorefile_full, 1);
+}
+
+sub ignorefile_open
+{
+	open(FILE, $ignorefile_full);
+}
+
+sub ignorefile_add
+{
+	my $filename = shift;
+
+	our @ignorefile_edit;
+
+	if (!in_array(@ignorefile_now, $filename))
+	{
+		push (@ignorefile_edit, $filename);
+	}
+}
+
+sub ignorefile_remove
+{
+	my $filename = shift;
+
+	our @ignorefile_edit;
+
+	if (in_array(@ignorefile_now, $filename))
+	{
+		push (@ignorefile_edit, $filename);
+	}
+}
+
+sub ignorefile_close
+{
+	close(FILE);
 }
 
 1;
