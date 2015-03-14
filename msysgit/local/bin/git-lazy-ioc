@@ -73,18 +73,18 @@ switch ($params{first})
 		$cmd = "git update-index --assume-unchanged \"%s\"";
 		$fn = 'ignorefile_add';
 
-		do_loop($params{first}, $cmd, $fn);
+		do_loop($params{first}, $cmd, \$fn);
 	}
 	case ('--rm')
 	{
 		$cmd = "git update-index --no-assume-unchanged \"%s\"";
 		$fn = 'ignorefile_remove';
 
-		do_loop($params{first}, $cmd, $fn);
+		do_loop($params{first}, $cmd, \$fn);
 	}
 	case ('--init')
 	{
-		if (is_inited())
+		if (!$input->getParam('--k') && is_inited())
 		{
 			print "Already Inited\n";
 
@@ -97,9 +97,9 @@ switch ($params{first})
 		$cmd = "git update-index --assume-unchanged \"%s\"";
 		$fn = 'ignorefile_add';
 
-		@filelist = ignorefile_st();
+		@filelist = (@ignorefile_now, ignorefile_st());
 
-		do_loop('--add', $cmd, $fn);
+		do_loop('--add', $cmd, \$fn);
 
 		GitTool::git_exec('git config --bool --add gitlazy.ignoreoncommit.init true');
 	}
@@ -150,7 +150,7 @@ sub do_loop
 		our @ignorefile_edit;
 		our @ignorefile_now;
 
-		print_r(777, @ignorefile_edit, @ignorefile_now);
+#		print_r(777, @ignorefile_edit, @ignorefile_now);
 
 		if ($key eq '--add')
 		{
