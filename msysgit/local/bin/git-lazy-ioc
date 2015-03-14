@@ -73,14 +73,14 @@ switch ($params{first})
 		$cmd = "git update-index --assume-unchanged \"%s\"";
 		$fn = 'ignorefile_add';
 
-		do_loop($params{first}, $cmd, \$fn);
+		do_loop($params{first}, $cmd, $fn);
 	}
 	case ('--rm')
 	{
 		$cmd = "git update-index --no-assume-unchanged \"%s\"";
 		$fn = 'ignorefile_remove';
 
-		do_loop($params{first}, $cmd, \$fn);
+		do_loop($params{first}, $cmd, $fn);
 	}
 	case ('--init')
 	{
@@ -99,7 +99,7 @@ switch ($params{first})
 
 		@filelist = ignorefile_st();
 
-		do_loop('--add', $cmd, \$fn);
+		do_loop('--add', $cmd, $fn);
 
 		GitTool::git_exec('git config --bool --add gitlazy.ignoreoncommit.init true');
 	}
