@@ -74,7 +74,7 @@ sub setParam
 
 	$self->{data}{params}{$param_key} = $param;
 
-	$self->fixCmdLineParam(\&{$self->{callback}});
+	$self->fixCmdLineParam(\&self->{callback});
 
 	return $self;
 }
@@ -90,6 +90,11 @@ sub fixCmdLineParam
 	}
 
 	return $self;
+}
+
+sub setCallback(&)
+{
+	$self->{callback} = \&{$_[0]};
 }
 
 sub is_key

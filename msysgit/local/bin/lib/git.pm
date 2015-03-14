@@ -29,6 +29,11 @@ sub git_current_path
 	return trim_exec(`git rev-parse --show-prefix`);
 }
 
+sub git_current_path_full
+{
+	return git_root().'/'.git_current_path();
+}
+
 sub git_is_inside_work_tree
 {
 	return trim_exec(`git rev-parse --is-inside-work-tree`);
@@ -55,6 +60,11 @@ sub git_current_br
 sub git_current_commit_id
 {
 	return trim_exec(`git rev-parse HEAD`);
+}
+
+sub git_config_path
+{
+	return git_root_git_dir().'/config';
 }
 
 1;

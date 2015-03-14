@@ -1,4 +1,6 @@
 
+use UNIVERSAL 'isa';
+
 # Perl trim function to remove whitespace from the start and end of the string
 sub trim($)
 {
@@ -33,8 +35,13 @@ sub is_number
 
 sub in_array
 {
-     my ($arr, $search_for) = @_;
-     return grep {$search_for eq $_} @$arr;
+	my ($arr, $search_for) = @_;
+	return grep {$search_for eq $_} @$arr;
+}
+
+sub is_array
+{
+	return isa(shift, 'ARRAY');
 }
 
 1;
