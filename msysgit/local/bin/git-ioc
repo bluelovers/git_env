@@ -2,7 +2,11 @@
 
 use File::Basename qw(dirname);
 
-unshift @INC, dirname(__FILE__);
+{
+	local $file = __FILE__;
+	$file =~ s/\\/\//g;
+	unshift @INC, dirname($file);
+};
 
 use Switch;
 
@@ -20,7 +24,7 @@ my $file = $input->getParam($params{first});
 
 if (!$file || $file eq '')
 {
-
+	exit;
 }
 
 switch ($params{first})
