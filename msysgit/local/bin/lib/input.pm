@@ -63,7 +63,7 @@ sub getParam
 	my $self = shift;
 	my $param_key = shift;
 
-	return $self->{params}{$param_key};
+	return $self->{data}{params}{$param_key};
 }
 
 sub setParam
@@ -72,7 +72,7 @@ sub setParam
 	my $param_key = shift;
 	my $param = shift;
 
-	$self->{params}{$param_key} = $param;
+	$self->{data}{params}{$param_key} = $param;
 
 	$self->fixCmdLineParam(\&{$self->{callback}});
 
@@ -86,7 +86,7 @@ sub fixCmdLineParam
 
 	if ($callback)
 	{
-		$callback->($self, $self->{params});
+		$callback->(\$self, \$self->{data});
 	}
 
 	return $self;
@@ -172,7 +172,7 @@ sub parseCmdLine
 		$n++;
 	}
 
-	return %{$self->{params}} = %params;
+	return %{$self->{data}} = %params;
 }
 
 1;
