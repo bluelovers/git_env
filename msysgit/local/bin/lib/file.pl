@@ -18,17 +18,32 @@ sub get_temp_file
 sub parseFile
 {
 	my $file = shift;
-	my $text;
+	my $retarray = shift;
+
+	my @arr;
 
 	open (FILE, $file);
 	while (<FILE>){
 		my $_c = substr $_, 0, 1;
 		next if ($_c eq '#');
-		$text = $text . rtrim($_) . "\n";
+		push (@arr, rtrim($_));
 	}
 	close(FILE);
 
-	return $text;
+	return $retarray ? @arr : join(/\n/, @arr);
+}
+
+sub basepath
+{
+	my $path = shift;
+	my $base = shift;
+
+	if (index($path, $base) eq 0)
+	{
+		substr($path, 0, length($base), '');
+	}
+
+	return $path;
 }
 
 1;
