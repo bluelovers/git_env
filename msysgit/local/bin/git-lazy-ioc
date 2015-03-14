@@ -66,6 +66,8 @@ CHKSWITCH:
 my $cmd = '';
 my $fn;
 
+ignorefile_parse();
+
 switch ($params{first})
 {
 	case ('--add')
@@ -131,6 +133,8 @@ sub do_loop
 
 		foreach my $file (@filelist)
 		{
+			next if (!$file);
+
 			my $filename = basepath($file, $root);
 
 			printf "\t[%i] %s\n", $i, $filename;
@@ -158,6 +162,8 @@ sub do_loop
 
 			foreach my $file (@ignorefile_edit)
 			{
+				next if (!$file);
+
 				print FILE $file, "\n";
 			}
 
@@ -169,6 +175,8 @@ sub do_loop
 
 			foreach my $file (@ignorefile_now)
 			{
+				next if (!$file);
+
 				if (!in_array(@ignorefile_edit, $file))
 				{
 					print FILE $file, "\n";
@@ -218,7 +226,7 @@ sub ignorefile_add
 
 	our @ignorefile_edit;
 
-	if (!in_array(@ignorefile_now, $filename))
+	if ($filename && !in_array(@ignorefile_now, $filename))
 	{
 		push (@ignorefile_edit, $filename);
 	}
@@ -230,7 +238,7 @@ sub ignorefile_remove
 
 	our @ignorefile_edit;
 
-	if (in_array(@ignorefile_now, $filename))
+	if ($filename && in_array(@ignorefile_now, $filename))
 	{
 		push (@ignorefile_edit, $filename);
 	}
