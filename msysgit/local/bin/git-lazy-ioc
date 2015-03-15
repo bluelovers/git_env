@@ -8,6 +8,8 @@ use File::Basename qw(dirname basename);
 	unshift @INC, dirname($file);
 };
 
+#https://gist.github.com/falsefalse/1238452
+
 use Switch;
 
 require 'lib/common.pl';
@@ -66,80 +68,97 @@ if ($#filelist < 0)
 
 CHKSWITCH:
 
-my $cmd = '';
-my $fn;
+do_switch($params_first);
 
-ignorefile_parse();
-
-switch ($params_first)
+sub do_switch
 {
-	case ('--add')
-	{
-		$cmd = "git update-index --assume-unchanged \"%s\"";
-		$fn = 'ignorefile_add';
+	my $cmd = '';
+	my $fn;
 
-		do_loop($params{first}, $cmd, \$fn);
-	}
-	case ('--rm')
+	if ($params_first ne '--init' && $params_first ne '--st' && $params_first ne '--reset' && !is_inited())
 	{
-		$cmd = "git update-index --no-assume-unchanged \"%s\"";
-		$fn = 'ignorefile_remove';
+		local $file = __FILE__;
+		$file =~ s/\\/\//g;
 
-		do_loop($params{first}, $cmd, \$fn);
+		print "Not initialized. Try " . basename($file) . in_array(qw(--init --reset), $params_first) . " --init\n";
+
+		exit;
 	}
-	case ('--init')
+
+	ignorefile_parse();
+
+	switch ($params_first)
 	{
-		if (!$params_force && is_inited())
+		case ('--add')
 		{
-			print "Already Inited\n";
+			$cmd = "git update-index --assume-unchanged \"%s\"";
+			$fn = 'ignorefile_add';
 
-			exit;
+			do_loop($params_first, $cmd, \$fn);
 		}
-
-		open(FILE, ">".$ignorefile_full);
-
-		print FILE "# git-Lazy ignore-on-commit Script!!\n\n";
-
-		close(FILE);
-
-		GitTool::git_exec('git config --bool --add gitlazy.ignoreoncommit.init true');
-
-		$params_first = '--add';
-
-		@filelist = (@ignorefile_now, ignorefile_st());
-
-		print "Initialized, ignoring files..."
-
-		goto CHKSWITCH;
-	}
-	case ('--st')
-	{
-		my @list = ignorefile_st();
-
-		foreach my $file (@list)
+		case ('--rm')
 		{
-			print $file, "\n";
+			$cmd = "git update-index --no-assume-unchanged \"%s\"";
+			$fn = 'ignorefile_remove';
+
+			do_loop($params_first, $cmd, \$fn);
 		}
-	}
-	case ('--refresh')
-	{
-#		GitTool::git_exec('git update-index --really-refresh');
+		case ('--init')
+		{
+			if (!$params_force && is_inited())
+			{
+				print "Already Inited\n";
 
-		@filelist = @ignorefile_now;
+				exit;
+			}
 
-		$params_first = '--add';
+			print "Initializing git-ignore-on-commit...\n";
 
-		goto CHKSWITCH;
-	}
-	case ('--reset')
-	{
-		GitTool::git_exec('git update-index --really-refresh');
+			open(FILE, ">".$ignorefile_full);
 
-		GitTool::git_exec('git config --bool --add gitlazy.ignoreoncommit.init false');
-	}
-	else
-	{
-		print "unknow...\n";
+			print FILE "# git-Lazy ignore-on-commit Script!!\n\n";
+
+			close(FILE);
+
+			GitTool::git_exec('git config --bool gitlazy.ignoreoncommit.init true');
+
+			$params_first = '--add';
+
+			@filelist = (@ignorefile_now, ignorefile_st());
+
+			print "Initialized, ignoring files...\n\n";
+
+			goto CHKSWITCH;
+		}
+		case ('--st')
+		{
+			my @list = ignorefile_st();
+
+			foreach my $file (@list)
+			{
+				print $file, "\n";
+			}
+		}
+		case ('--refresh')
+		{
+	#		GitTool::git_exec('git update-index --really-refresh');
+
+			@filelist = @ignorefile_now;
+
+			$params_first = '--add';
+
+			goto CHKSWITCH;
+		}
+		case ('--reset')
+		{
+			GitTool::git_exec('git update-index --really-refresh');
+
+			GitTool::git_exec('git config --bool gitlazy.ignoreoncommit.init false');
+		}
+		else
+		{
+			print "unknow...\n";
+		}
 	}
 }
 
