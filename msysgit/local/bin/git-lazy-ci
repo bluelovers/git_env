@@ -31,7 +31,7 @@ use Switch;
 use constant false => 0;
 use constant true  => 1;
 
-require 'lib/git.pm';
+#require 'lib/git.pm';
 
 my @file;
 $file[0] = '~ci.list.txt';
@@ -194,11 +194,22 @@ elsif ($commit_count > 0)
 	do_cmd("git merge \"${br_name}\"", 0, true);
 }
 
-do_cmd("git branch -d \"${br_name}\"", 0, true);
+my $br_keep = getOption('--k');
+
+if (!$br_keep)
+{
+	do_cmd("git branch -d \"${br_name}\"", 0, true);
+
+	$br_keep = 'is deleted';
+}
+else
+{
+	$br_keep = 'is still available';
+}
 
 do_log("\nSummary of actions:");
 do_log("- The lazy branch '${br_name}' was ${fastforward}merged into '${br_now}'");
-do_log("- Lazy branch '${br_name}' is deleted");
+do_log("- Lazy branch '${br_name}' ${br_keep}");
 do_log("- You are now on branch '${br_now}'");
 do_log("- Total Step: ${commit_count}");
 
