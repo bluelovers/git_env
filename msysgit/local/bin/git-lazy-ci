@@ -14,6 +14,14 @@ END
 	exit;
 }
 
+use File::Basename qw(dirname basename);
+
+{
+	local $file = __FILE__;
+	$file =~ s/\\/\//g;
+	unshift @INC, dirname($file);
+};
+
 use Time::HiRes qw(time usleep gettimeofday);
 use POSIX qw(mktime ctime);
 use Data::Dumper;
@@ -22,6 +30,8 @@ use Switch;
 
 use constant false => 0;
 use constant true  => 1;
+
+require 'lib/git.pm';
 
 my @file;
 $file[0] = '~ci.list.txt';
