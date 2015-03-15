@@ -200,7 +200,7 @@ if (!$br_keep)
 {
 	do_cmd("git branch -d \"${br_name}\"", 0, true);
 
-	$br_keep = 'is deleted';
+	$br_keep = 'has been removed';
 }
 else
 {
