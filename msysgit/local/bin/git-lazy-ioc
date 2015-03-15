@@ -32,12 +32,15 @@ my %params = $input->parseCmdLine(@ARGV);
 
 my @filelist;
 
-if ($params{first} eq '--init')
+my $params_first = $params{first};
+my $params_force = $input->getParam('--f');
+
+if (!in_array(qw(--add --rm), $params_first))
 {
 	goto CHKSWITCH;
 }
 
-my $filename = $input->getParam($params{first});
+my $filename = $input->getParam($params_first);
 
 if ($filename =~ /\*/ || 1)
 {
@@ -68,7 +71,7 @@ my $fn;
 
 ignorefile_parse();
 
-switch ($params{first})
+switch ($params_first)
 {
 	case ('--add')
 	{
@@ -86,7 +89,7 @@ switch ($params{first})
 	}
 	case ('--init')
 	{
-		if (!$input->getParam('--f') && is_inited())
+		if (!$params_force && is_inited())
 		{
 			print "Already Inited\n";
 
@@ -99,14 +102,15 @@ switch ($params{first})
 
 		close(FILE);
 
-		$cmd = "git update-index --assume-unchanged \"%s\"";
-		$fn = 'ignorefile_add';
+		GitTool::git_exec('git config --bool --add gitlazy.ignoreoncommit.init true');
+
+		$params_first = '--add';
 
 		@filelist = (@ignorefile_now, ignorefile_st());
 
-		do_loop('--add', $cmd, \$fn);
+		print "Initialized, ignoring files..."
 
-		GitTool::git_exec('git config --bool --add gitlazy.ignoreoncommit.init true');
+		goto CHKSWITCH;
 	}
 	case ('--st')
 	{
@@ -116,6 +120,26 @@ switch ($params{first})
 		{
 			print $file, "\n";
 		}
+	}
+	case ('--refresh')
+	{
+#		GitTool::git_exec('git update-index --really-refresh');
+
+		@filelist = @ignorefile_now;
+
+		$params_first = '--add';
+
+		goto CHKSWITCH;
+	}
+	case ('--reset')
+	{
+		GitTool::git_exec('git update-index --really-refresh');
+
+		GitTool::git_exec('git config --bool --add gitlazy.ignoreoncommit.init false');
+	}
+	else
+	{
+		print "unknow...\n";
 	}
 }
 
