@@ -86,7 +86,7 @@ switch ($params{first})
 	}
 	case ('--init')
 	{
-		if (!$input->getParam('--k') && is_inited())
+		if (!$input->getParam('--f') && is_inited())
 		{
 			print "Already Inited\n";
 
@@ -94,6 +94,9 @@ switch ($params{first})
 		}
 
 		open(FILE, ">".$ignorefile_full);
+
+		print FILE "# git-Lazy ignore-on-commit Script!!\n\n";
+
 		close(FILE);
 
 		$cmd = "git update-index --assume-unchanged \"%s\"";
