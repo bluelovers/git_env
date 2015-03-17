@@ -31,7 +31,8 @@ use Switch;
 use constant false => 0;
 use constant true  => 1;
 
-#require 'lib/git.pm';
+require 'lib/common.pl';
+require 'lib/git.pm';
 
 my @file;
 $file[0] = '~ci.list.txt';
@@ -89,7 +90,7 @@ my $output_list_mode = getOption('--no-ff');
 
 #print_r(%params);
 
-my $br_now = git_current_br();
+my $br_now = GitTool::current_br();
 my $br_name = 'git-lazy-ci/' . getupdateDay();
 
 #print $commit_msg;
@@ -843,24 +844,6 @@ sub getupdateDay{
 	return $localtime[5].$yp.$localtime[4].$sp.$localtime[3].$ap.$localtime[2].$cp.$localtime[1].$cp.$localtime[0].'.'.$microseconds.'-GMT';
 }
 
-sub git_current_br
-{
-	return trim_lf(`git rev-parse --abbrev-ref HEAD`);
-}
-
-sub git_current_commit_id
-{
-	return trim_lf(`git rev-parse HEAD`);
-}
-
-sub git_branch_is_empty
-{
-	# fatal: ambiguous argument 'HEAD': unknown revision or path not in the working tree.
-	my $log_ci = git_current_commit_id();
-
-	return ($log_ci =~ m/fatal/);
-}
-
 sub do_log
 {
 	my $log_ci = shift;
@@ -952,7 +935,7 @@ sub do_start
 		exit;
 	}
 
-	if (git_branch_is_empty())
+	if (GitTool::branch_is_empty())
 	{
 		$chk_work = 1;
 
