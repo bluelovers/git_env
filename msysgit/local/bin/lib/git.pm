@@ -49,7 +49,20 @@ sub exec
 
 sub exec2
 {
-	return exec($_[0].' 2>\&1', $_[1]);
+	if ($_[1])
+	{
+		my @output = `$_[0] 2>\&1`;
+		my @ret;
+
+		foreach my $_v (@output)
+		{
+			push(@ret, trim_exec($_v));
+		}
+
+		return @ret;
+	}
+
+	return trim_exec(`$_[0] 2>\&1`);
 }
 
 #http://stackoverflow.com/questions/12293944/how-to-find-the-path-of-the-local-git-repository-when-i-am-possibly-in-a-subdire
