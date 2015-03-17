@@ -18,7 +18,7 @@ require 'lib/git.pm';
 
 #use Capture::Tiny 'capture';
 
-print_r(GitTool::branch_is_empty());
+print_r(GitTool::branch_is_empty(), 999, GitTool::current_commit_id(), GitTool::exec('git rev-parse HEAD'));
 
 print "\n--------\n";
 
