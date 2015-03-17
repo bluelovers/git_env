@@ -1,0 +1,43 @@
+#!/bin/perl
+
+use File::Basename qw(dirname basename);
+
+{
+	local $file = __FILE__;
+	$file =~ s/\\/\//g;
+	unshift @INC, dirname($file);
+};
+
+#https://gist.github.com/falsefalse/1238452
+
+use Switch;
+
+require 'lib/common.pl';
+require 'lib/input.pm';
+require 'lib/git.pm';
+
+#use Capture::Tiny 'capture';
+
+print_r(GitTool::branch_is_empty());
+
+print "\n--------\n";
+
+#print GitTool::exec('git rev-parse HEAD');
+
+$cmd = 'git rev-parse HEAD';
+
+#open(STDERR, ">&STDOUT");
+#
+##$output = `$cmd`;
+#
+#my ($out, $err) = capture { system($cmd) };
+
+#open (PIPE, "$cmd |");
+
+my $output = `$cmd 2>\&1`;
+
+print_r($output, $?);
+
+#print GitTool::exec2('git rev-parse HEAD');
+
+1;
