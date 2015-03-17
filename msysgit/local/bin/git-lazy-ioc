@@ -21,12 +21,12 @@ print "git-Lazy ignore-on-commit Script!!\n\n";
 my $ignorefile = ".gitignore-oncommit";
 my $configkey = "gitlazy.ignoreoncommit";
 
-my $ignorefile_full = GitTool::git_root() . '/' . $ignorefile;
+my $ignorefile_full = GitTool::root() . '/' . $ignorefile;
 
 my @ignorefile_now;
 my @ignorefile_edit;
 
-my $path_full = GitTool::git_current_path_full();
+my $path_full = GitTool::current_path_full();
 
 my $input = CmdLineTool::newInstance();
 
@@ -120,7 +120,7 @@ sub do_switch
 
 			close(FILE);
 
-			GitTool::git_exec('git config --bool gitlazy.ignoreoncommit.init true');
+			GitTool::exec('git config --bool gitlazy.ignoreoncommit.init true');
 
 			$params_first = '--add';
 
@@ -141,7 +141,7 @@ sub do_switch
 		}
 		case ('--refresh')
 		{
-	#		GitTool::git_exec('git update-index --really-refresh');
+	#		GitTool::exec('git update-index --really-refresh');
 
 			@filelist = @ignorefile_now;
 
@@ -151,9 +151,9 @@ sub do_switch
 		}
 		case ('--reset')
 		{
-			GitTool::git_exec('git update-index --really-refresh');
+			GitTool::exec('git update-index --really-refresh');
 
-			GitTool::git_exec('git config --bool gitlazy.ignoreoncommit.init false');
+			GitTool::exec('git config --bool gitlazy.ignoreoncommit.init false');
 		}
 		else
 		{
@@ -172,8 +172,8 @@ sub do_loop
 	{
 		print $cmd, "\n\n";
 
-		my $root = GitTool::git_root() . '/';
-		my $path = GitTool::git_current_path();
+		my $root = GitTool::root() . '/';
+		my $path = GitTool::current_path();
 
 		my $i = 0;
 
@@ -192,7 +192,7 @@ sub do_loop
 				$filename = basepath($filename, $path);
 			}
 
-			GitTool::git_exec(sprintf($cmd, $filename));
+			GitTool::exec(sprintf($cmd, $filename));
 
 			$i++;
 		}
@@ -236,14 +236,14 @@ sub do_loop
 
 sub is_inited
 {
-	my $init = GitTool::git_exec("git config --bool --get ${configkey}.init");
+	my $init = GitTool::exec("git config --bool --get ${configkey}.init");
 
 	return ($init eq 'true') || 0;
 }
 
 sub ignorefile_st
 {
-	my $text = GitTool::git_exec("git ls-files -v | grep ^[^HSMRCK\?]");
+	my $text = GitTool::exec("git ls-files -v | grep ^[^HSMRCK\?]");
 
 	my @text = split("\n", $text);
 	my @list;
