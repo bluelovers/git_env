@@ -88,6 +88,8 @@ my $commit_msg = getOption('--msg');
 my $commit_mode = getOption('--log');
 my $output_list_mode = getOption('--no-ff');
 
+my $commit_force = getOption('--f');
+
 #print_r(%params);
 
 my $br_now = GitTool::current_br();
@@ -230,6 +232,13 @@ sub git_loop()
 {
 	my $i = 1;
 
+	my $cmd_add;
+
+	if ($commit_force)
+	{
+		$cmd_add .= ' --f ';
+	}
+
 	foreach my $_m (@map_sort)
 	{
 		next if !($list_rename{$_m});
@@ -250,8 +259,8 @@ sub git_loop()
 ##			$_t = `git mv "$_o" "$_n"`;
 #			$_t = `git add $_n`;
 
-			$_t = do_cmd("git rm --ignore-unmatch --cached ${_o}", 0, true);
-			$_t = do_cmd("git add ${_n}", 0, true);
+			$_t = do_cmd("git rm --ignore-unmatch ${cmd_add} --cached ${_o}", 0, true);
+			$_t = do_cmd("git add ${cmd_add} ${_n}", 0, true);
 		}
 
 			my %list_add;
@@ -348,11 +357,11 @@ sub git_loop()
 
 			if ($_m =~ m/D/)
 			{
-				$cmd = "git rm --ignore-unmatch --cached $_v2";
+				$cmd = "git rm --ignore-unmatch ${cmd_add} --cached $_v2";
 			}
 			elsif ($_m ne '??')
 			{
-				$cmd = "git add --ignore-errors $_v2";
+				$cmd = "git add ${cmd_add} --ignore-errors $_v2";
 			}
 
 			next if ($cmd eq '');
