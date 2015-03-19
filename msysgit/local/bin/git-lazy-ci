@@ -344,6 +344,12 @@ sub git_loop()
 
 			next;
 		}
+		elsif ($_m =~ m/M/ && getOption('--no-mod'))
+		{
+			do_log("\t\"--no-mod\" is set, skip all modified.");
+
+			next;
+		}
 
 		foreach my $_v (@{$list{$_m}})
 		{
