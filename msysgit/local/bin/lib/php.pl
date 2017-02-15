@@ -1,5 +1,5 @@
 
-use UNIVERSAL 'isa';
+use UNIVERSAL::isa;
 
 # Perl trim function to remove whitespace from the start and end of the string
 sub trim($)
